@@ -6,50 +6,49 @@ decodefq(z,x)=fromdigits(Vec(z.pol),x.p);
 int2fqx(i,x)=Polrev([encodefq(z,x)|z<-digits(i,x.p^x.f)]);
 fqx2int(p,x)=fromdigits([decodefq(z,x)|z<-Vecrev(p)],x.p^x.f);
 
-\\print(q, "\n", t, "\n", m);
+\\ Basile entend par "stéganographie" qu'il a ajouté à certaines positions
+\\ d'un code BCH correct un entier de sorte à obtenir un code ASCII correspondant
+\\ aux lettres du message "secret", ainsi "stéganographié" dans le code.
 
-\\print("\n", 139*x*x^70);
+\\ On va donc appliquer la méthode de décodage d'un code BCH vue en cours,
+\\ en déterminant le polynôme syndrome pour déterminer l'approximation
+\\ rationnelle R/E de S modulo X^(2t) avec Padé.
+\\ Muni de E le poly localisateur d'erreurs, on détermine les positions contenant des erreurs :
+\\ les indices i tels que E(alpha^(-i)) = 0.
+\\ La valeur de l'erreur en position i étant donnée par :
+\\ - R(alpha^(-i)) / E'(alpha^(-i)) * (alpha^(-i * (1 - a))).
 
-y=int2fqx(m, f);
-\\ distance prescrite : d = 2*35+1 = 71
+y = int2fqx(m, f); \\ message reçu
+syndrome(y, a, c) = sum(i=0, 2 * t - 1, subst(y, 'x, a^(i+c)) * 'x^i); \\ polynôme syndrome
 
-\\printf("\n");
-lm=digits(m,128);
-\\print(length(lm));
-\\a=f;
-syndrome(y, a, c) = sum(i=0, 2 * t - 1, subst(y, 'x, a^(i+c)) * 'x^i);
-job() = {
-for(k=0, 1000,
-
-  a = ffprimroot(f);
-  for(j=0, 238,
-  \\printf(ffprimroot(f));
-  \\a = ffprimroot(f);
-  ratio=bestapprPade(Mod(syndrome(y, a, j), x^(2*t)));
-  R = numerator(ratio);
-  E = denominator(ratio);
-  ll = List();
-  for(i = 0, 126, pol=subst(E, 'x, a^(-i)); if (pol == 0, val=subst(R/deriv(E) * (x^(j-1)), 'x, a^(-i)); l=fqx2int(val, f); listput(ll, l)));
-crush=Strchr(Vec(ll));
-\\print(a, " ", j);
-if(crush == "Je t'aime Adele, epouse-moi !", print(crush); return);
-);
-);
-\\syndrome(y, a) = sum(i=0, 2 * t - 1, subst(y, 'x, a^(i)) * 'x^i); \ \\alpha racine de l'unité tq c(x) in C ssi pour tout 0<=j<= 2t-1, c(alpha^(a+j)) = 0
-\\print("\n");
-\\printf(syndrome(y, a));
+\\ On va rechercher le bon paramètre c satisfaisant la propriété (*):
+\\ alpha élément primitif (générateur de Fq) tq c(x) \in C ssi pour tout 0 <= j <= 2t-1, c(alpha^(a+j)) = 0. (*)
+\\ On pourrait directement calculer le polynôme générateur du code donné par le ppcm des polynômes minimaux de alpha^a,...,alpha^(a+d-2)
+\\ avec d=2t+1 la distance prescrite (reformulation de (*)).
+search_primitive_root_and_c() = {
+  \\ recherche du paramètre alpha et c :
+  for(k = 0, q,
+    a = ffprimroot(f); \\ on teste une nouvelle racine primitive
+    for(j = 0, q,
+      rational_approx = bestapprPade(Mod(syndrome(y, a, j), x^(2 * t)));
+      R = numerator(rational_approx);
+      E = denominator(rational_approx); \\ polynôme localisateur des erreurs
+      msg = List();
+      for(i = 0, q - 2, \\ taille du message : q - 1
+        pol = subst(E, 'x, a^(-i));
+	if (pol == 0,
+	  val = subst(R/deriv(E) * (x^(j - 1)), 'x, a^(-i));
+	  chr = fqx2int(val, f); \\ code ASCII de l'erreur
+	  listput(msg, chr) \\ on accumule les valeurs des erreurs dans une liste pour obtenir un message potentiel
+	);
+      );
+      crush = Strchr(Vec(msg)); \\ on convertit la liste de codes ASCII en chaîne ASCII
+      \\print(a, " ", j); \\ affichage des paramètres alpha élément primitif tq c(x) \in C ssi pour tout 0 <= j <= 2t-1, c(alpha^(a+j)) = 0. (*)
+      if(crush == "Je t'aime Adele, epouse-moi !", print(crush); return); \\ On s'arrête dès que les paramètres alpha et c (variable j ici)
+      \\ satisfont la propriété (*) et que ce sont bien les paramètres choisis par Basile
+    );
+  );
 };
 
 
-job();
-\\locator(a) = prod(i=0, t, (1-a^i * x));
-
-\\print("\n", lift(Mod(syndrome(y, a), x^(2*t))));
-\\printf(locator(y, a));
-\\ratio=bestapprPade(Mod(syndrome(y, a), x^(2*t))); \\ S = R/E
-\\print("\n", ratio);
-\\R = numerator(ratio);
-\\E = denominator(ratio);
-
-\\for(i = 0, 127,pol=subst(E, 'x, a^(-i)); if (pol == 0, val=subst(R/deriv(E), 'x, a^(-i)); l=fqx2int(val, f); print(Strchr(l))));
-
+search_primitive_root_and_c();
