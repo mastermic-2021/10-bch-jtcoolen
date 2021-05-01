@@ -19,8 +19,8 @@ fqx2int(p,x)=fromdigits([decodefq(z,x)|z<-Vecrev(p)],x.p^x.f);
 \\ rationnelle R/E de S modulo X^(2t) avec Padé.
 \\ Muni de E le poly localisateur d'erreurs, on détermine les positions contenant des erreurs :
 \\ les indices i tels que E(alpha^(-i)) = 0.
-\\ La valeur de l'erreur en position i étant donnée par :
-\\ - R(alpha^(-i)) / E'(alpha^(-i)) * (alpha^(-i * (1 - a))).
+\\ La valeur de l'erreur e_i en position i étant donnée par :
+\\ - R(alpha^(-i)) / E'(alpha^(-i)) * (alpha^(-i * (a - 1))).
 
 y = int2fqx(m, f); \\ message reçu
 syndrome(y, a, c) = sum(i=0, 2 * t - 1, subst(y, 'x, a^(i+c)) * 'x^i); \\ polynôme syndrome
