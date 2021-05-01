@@ -7,8 +7,12 @@ int2fqx(i,x)=Polrev([encodefq(z,x)|z<-digits(i,x.p^x.f)]);
 fqx2int(p,x)=fromdigits([decodefq(z,x)|z<-Vecrev(p)],x.p^x.f);
 
 \\ Basile entend par "stéganographie" qu'il a ajouté à certaines positions
-\\ d'un code BCH correct un entier de sorte à obtenir un code ASCII correspondant
-\\ aux lettres du message "secret", ainsi "stéganographié" dans le code.
+\\ d'un code BCH correct un entier (code ASCII) correspondant aux lettres
+\\ du message "secret", ainsi "stéganographié" dans le code.
+
+\\ Pour retrouver le message, il suffit d'identifier les positions des
+\\ erreurs et corriger ces erreurs. Comme le code est 35-correcteur,
+\\ le message est formé d'au plus 35 caractères.
 
 \\ On va donc appliquer la méthode de décodage d'un code BCH vue en cours,
 \\ en déterminant le polynôme syndrome pour déterminer l'approximation
